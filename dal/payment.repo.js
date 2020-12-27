@@ -6,7 +6,7 @@ const repo = {
     baseRepo.connect((err, db) => {
       if (err) next(err);
       else {
-        db.collection("paymentLog").insertOne(paymentLog, next);
+        db.collection("orders").insertOne(paymentLog, next);
       }
     });
   },
@@ -14,7 +14,7 @@ const repo = {
     baseRepo.connect((err, db) => {
       if (err) next(err);
       else {
-        db.collection("paymentLog").find({}).sort({ date: -1 }).toArray(next);
+        db.collection("orders").find({}).sort({ date: -1 }).toArray(next);
       }
     });
   },
@@ -22,7 +22,7 @@ const repo = {
     baseRepo.connect((err, db) => {
       if (err) next(err);
       else {
-        db.collection("paymentLog").findOne({ authority: authority }, next);
+        db.collection("orders").findOne({ authority: authority }, next);
       }
     });
   },
@@ -30,7 +30,7 @@ const repo = {
     baseRepo.connect((err, db) => {
       if (err) next(err);
       else {
-        db.collection("paymentLog").findOne({ trackingCode }, next);
+        db.collection("orders").findOne({ trackingCode }, next);
       }
     });
   },
@@ -39,7 +39,7 @@ const repo = {
       if (err) next(err);
       else {
         const objId = new mongoDb.ObjectID(_id);
-        db.collection("paymentLog").findOne({ _id: objId }, next);
+        db.collection("orders").findOne({ _id: objId }, next);
       }
     });
   },
@@ -48,7 +48,7 @@ const repo = {
       if (err) next(err);
       else {
         const objId = new mongoDb.ObjectID(_id);
-        db.collection("paymentLog").updateOne(
+        db.collection("orders").updateOne(
           { _id: objId },
           { $set: payment },
           next
@@ -61,7 +61,7 @@ const repo = {
       if (err) next(err);
       else {
         const objId = new mongoDb.ObjectID(_id);
-        db.collection("paymentLog").deleteOne({ _id: objId }, next);
+        db.collection("orders").deleteOne({ _id: objId }, next);
       }
     });
   },

@@ -12,6 +12,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 app.use(appRouter);
-app.listen(process.env.PORT);
+app.listen(process.env.PORT || 4000);
 
-console.log("server is listening on port " + process.env.PORT);
+console.log("server is listening on port " + (process.env.PORT || 4000));

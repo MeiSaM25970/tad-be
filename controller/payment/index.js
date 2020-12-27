@@ -1,13 +1,9 @@
-// const userInfoSchema = require("./models/userInfo.model");
-const orderRepo = require("../../dal/order.repo");
 const paymentRepo = require("../../dal/payment.repo");
 const address = require("../../src/address");
-const zarinPalCode = require("./config");
-const mongodb = require("mongodb");
-const zPal = require("zarinpal-checkout");
 const _ = require("lodash");
 const uid = require("uid");
 const moment = require("moment-jalaali");
+const sendSmsNormal = require("../sendSMS/normal");
 
 const checkoutController = {
   create: (req, res) => {
@@ -15,75 +11,45 @@ const checkoutController = {
     if (userInfo) {
       if (
         !userInfo.fullName ||
-        !userInfo.area ||
-        !userInfo.city ||
-        !userInfo.address ||
-        !userInfo.postCode ||
-        !userInfo.productId ||
-        !userInfo.productName ||
-        !userInfo.productPrice
+        !userInfo.productType ||
+        !userInfo.phoneNumber
       ) {
         res.status(400).send({ massage: "درخواست معتبر نمی باشد." });
       } else {
-        orderRepo.create(userInfo, (err, result) => {
-          if (err) {
-            res.status(500).send(err);
-          } else {
-            try {
-              // if users pay from Payment gateway
-              const price = userInfo.productPrice;
-              // make description.
-              const description =
-                " بابت محصول " +
-                userInfo.productName +
-                " به نام : " +
-                userInfo.fullName;
-              // zarinpal payment
-              const myZPal = zPal.create(zarinPalCode, true);
-              myZPal
-                .PaymentRequest({
-                  Amount: price, // In Tomans
-                  CallbackURL: `${address.api}payment/verify`,
-                  Description: description,
-                  mobile: userInfo.tel,
-                })
-                .then((response) => {
-                  if (response.status === 100) {
-                    const date = moment().format("YYYY/MM/DD HH:mm:ss");
-
-                    const paymentLog = {
-                      productId: new mongodb.ObjectId(userInfo.productId),
-                      price: price,
-                      authority: response.authority,
-                      description,
-                      date: date,
-                      mobile: userInfo.tel,
-                      productName: userInfo.productName,
-                      fullName: userInfo.fullName,
-                      area: userInfo.area,
-                      city: userInfo.city,
-                      address: userInfo.address,
-                      postCode: userInfo.postCode,
-                    };
-                    paymentRepo.create(paymentLog, (err) => {
-                      if (err) res.status(500).send(err);
-                      else {
-                        res.send(response.url);
-                      }
-                    });
-                  } else {
-                    return Promise.reject(response);
-                  }
-                })
-                .catch((err) => {
-                  console.log(err);
-                  res.status(500).send(err);
-                });
-            } catch (err) {
-              console.log(err);
+        try {
+          const data = userInfo;
+          const date = moment().format("YYYY/MM/DD HH:mm:ss");
+          const trackingCode = uid.uid(6);
+          const newPayment = {
+            description: data.description,
+            date: date,
+            mobile: data.phoneNumber,
+            isSuccess: true,
+            isAdded: true,
+            trackingCode: trackingCode,
+            status: "new",
+            productName: data.productType,
+            fullName: data.fullName,
+          };
+          paymentRepo.create(newPayment, (err) => {
+            if (err) res.status(500).send(err);
+            else {
+              sendSmsNormal({
+                fullName: newPayment.fullName,
+                phoneNumber: newPayment.mobile,
+              });
+              res.send({
+                url: `${
+                  address.success_payment +
+                  "?trackingCode=" +
+                  newPayment.trackingCode
+                }`,
+              });
             }
-          }
-        });
+          });
+        } catch (err) {
+          console.log(err);
+        }
       }
     } else
       res.status(400).send({ massage: "اطلاعات وارد شده معتبر نمی باشد." });
@@ -98,7 +64,7 @@ const checkoutController = {
         else {
           if (data.isSuccess === undefined) {
             if (query.Status === "OK") {
-              const trackingCode = uid.uid(20);
+              const trackingCode = uid.uid(6);
               const newPayment = {
                 productId: data.productId,
                 price: data.price,

@@ -18,6 +18,7 @@ const contactRoutes = require("./contact.routes");
 const weblogRoutes = require("./weblog.routes");
 const commentsRoutes = require("./comments.routes");
 const logMiddlewareRoutes = require("./counter.routes");
+const orderRoute = require("./order.routes");
 
 router.use("/", mainRoute);
 router.use("/counter", logMiddlewareRoutes);
@@ -37,5 +38,6 @@ router.use("/about", aboutRoutes);
 router.use("/contact", contactRoutes);
 router.use("/weblog", weblogRoutes);
 router.use("/comments", commentsRoutes);
+router.use("/order", orderRoute);
 
 module.exports = router;
